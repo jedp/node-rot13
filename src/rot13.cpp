@@ -1,5 +1,5 @@
 /*
- * asynchronous rot13 encoder
+ * sync/async rot13 encoder
  */
  
 #include <v8.h>
@@ -11,6 +11,7 @@ using namespace v8;
 using namespace std;
 
 // macros from pquerna's https://github.com/pquerna/node-extension-examples
+
 #define REQ_STR_ARG(I, VAR)                                             \
     if (args.Length() <= (I) || !args[I]->IsString())                   \
         return ThrowException(Exception::TypeError(                     \
@@ -134,10 +135,16 @@ public:
         baton->source = ObjectToString(s);
         baton->cb = Persistent<Function>::New(cb);
 
-        // Add refcount so gc doesn't remove us yet
+        // Add refcount so we won't get gc'd while running in another thread
         rot13->Ref();
 
+        // eio_custom will cause EIO_Rotate to be run in the thread pool,
+        // and EIO_AfterRotate to be run back in the main thread.  Each
+        // function will have the baton passed to it.
         eio_custom(EIO_Rotate, EIO_PRI_DEFAULT, EIO_AfterRotate, baton);
+
+        // Increase the ref count to the event loop, so node doesn't exit
+        // because it thinks there are no more events to handle.
         ev_ref(EV_DEFAULT_UC);
 
         return Undefined();
@@ -146,10 +153,14 @@ public:
     static int EIO_Rotate(eio_req *req)
     {
         // runs in the thread pool
+        // nothing here should use js or v8
+       
         baton_t *baton = static_cast<baton_t *>(req->data);
 
         baton->rotated = rotate_str(baton->source);
 
+        // when this function returns, libeio will notify the main
+        // thread that EIO_AfterRotate sould run.
         return 0;
     }
 
@@ -158,12 +169,11 @@ public:
         // runs back in the main thread
         baton_t *baton = static_cast<baton_t *>(req->data);
 
-        // remove ref to event loop
+        // decrement references we incremented in Rotate()
         ev_unref(EV_DEFAULT_UC);
-
-        // decref
         baton->rot13->Unref();
 
+        // prepare args for callback
         Local<Value> argv[1];
         argv[0] = String::New(baton->rotated.c_str());
 
@@ -174,6 +184,8 @@ public:
             FatalException(try_catch);
         }
 
+        // Having run the callback and caught any exceptions, we
+        // destroy the persistent reference and the baton.
         baton->cb.Dispose();
         delete baton;
         return 0;
