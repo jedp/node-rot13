@@ -1,3 +1,6 @@
+/*
+ * rot13 as a c++ method
+ */
 
 #include <v8.h>
 #include <node.h>
