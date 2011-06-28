@@ -6,7 +6,13 @@ This is me learning how to write native extensions for node.js.
 And if you have a rot13-intensive node.js application that's been dying to have
 the speed of a native rot13 C++ extension, well then.  Here you are.
 
-    #!zsh
+Summary
+-------
+
+`rot13.js` is a JS implementation.
+
+`src/rot13.cpp` is a C++ extension.
+
     % node-waf configure build
     % node
     > var rot13 = require("./build/default/rot13")
