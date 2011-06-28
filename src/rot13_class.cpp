@@ -22,6 +22,8 @@ string ObjectToString(Local<Value> value) {
 
 char rotate_ch(const char ch)
 {
+    // Rotate a character
+
     // a-z -> n-m
     // Lowercase letters more common, so check them first.
     if (97 <= ch && ch <= 122) {
@@ -35,6 +37,21 @@ char rotate_ch(const char ch)
 
     // default case, no change
     return (ch);
+}
+
+std::string rotate_str(const std::string &source)
+{
+    // Rotate the characters in a string 
+    
+    std::string rotated;
+    rotated.reserve(source.length());
+
+    // Rotate the characters in the string
+    for (std::string::const_iterator it = source.begin(); it != source.end(); ++it) {
+        rotated.push_back(rotate_ch(*it));
+    }
+
+    return (rotated);
 }
 
 class Rot13: ObjectWrap 
@@ -82,18 +99,8 @@ public:
 
         REQ_STR_ARG(0, s);
 
-        // Convert the v8 Value to a std string 
-        std::string source = ObjectToString(s);
-        std::string rotated;
-        rotated.reserve(source.length());
-        
-        // Rotate the characters in the string
-        for (std::string::iterator it = source.begin(); it != source.end(); ++it) {
-            rotated.push_back(rotate_ch(*it));
-        }
-
-        // Turn the results back into a v8 String 
-        Local<String> result = String::New(rotated.c_str());
+        // Convert to std::string for rotating, then back into v8 String 
+        Local<String> result = String::New(rotate_str(ObjectToString(s)).c_str());
         return scope.Close(result);
     }
 };
