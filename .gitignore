@@ -1,0 +1,9 @@
+*.un~
+*.swp
+*.swo
+
+.lock-wscript
+
+node_modules
+build
+
