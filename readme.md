@@ -36,3 +36,14 @@ Resources
 
 [Paul Querna's Tutorial](https://www.cloudkick.com/blog/2010/aug/23/writing-nodejs-native-extensions/)
 
+To Do
+-----
+
+1. Make this not happen when you forget to use `new`:
+
+        > var rot13 = require("./build/default/rot13");
+        > var r = rot13.Rot13();   // <-- didn't say "new rot13.Rot13()"
+        Assertion failed: (handle->InternalFieldCount() > 0), function Wrap, file /usr/local/include/node/node_object_wrap.h, line 61.
+
+
+
