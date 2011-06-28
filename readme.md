@@ -3,11 +3,12 @@ node-rot13
 
 Sync and async implementations of rot13 in a c++ extension for node.js.
 
-This is me trying to learn.
+This is me trying to learn C++ and v8 at the same time.  Please tell me if you
+see anything I'm doing wrong or could do better.
 
-And if you have a rot13-intensive node.js application that's been dying to have
-the speed of a native rot13 C++ extension working asynchronously on the v8
-thread pool, well then.  Here you are.
+And if you happen to have a rot13-intensive node.js application that's been
+dying to have the speed of a native rot13 C++ extension working asynchronously
+on the v8 thread pool, well then.  Here you are.
 
 Summary
 -------
