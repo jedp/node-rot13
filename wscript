@@ -13,5 +13,5 @@ def build(bld):
                     '-D_LARGEFILE_SOURCE', 
                     '-Wall']
     obj.target = "rot13"
-    obj.source = "rot13.cpp"
+    obj.source = "src/rot13.cpp"
 
