@@ -1,4 +1,7 @@
-
+/*
+ * asynchronous rot13 encoder
+ */
+ 
 #include <v8.h>
 #include <node.h>
 #include <iostream>
@@ -7,12 +10,18 @@ using namespace node;
 using namespace v8;
 using namespace std;
 
-// macro from pquerna's https://github.com/pquerna/node-extension-examples
+// macros from pquerna's https://github.com/pquerna/node-extension-examples
 #define REQ_STR_ARG(I, VAR)                                             \
     if (args.Length() <= (I) || !args[I]->IsString())                   \
         return ThrowException(Exception::TypeError(                     \
                 String::New("Argument " #I " must be a string")));      \
     Local<String> VAR = Local<String>::Cast(args[I])        
+
+#define REQ_FUN_ARG(I, VAR)                                             \
+    if (args.Length() <= (I) || !args[I]->IsFunction())                 \
+        return ThrowException(Exception::TypeError(                     \
+                String::New("Argument " #I " must be a function")));    \
+    Local<Function> VAR = Local<Function>::Cast(args[I])        
 
 // Convert a v8 value to a std string
 string ObjectToString(Local<Value> value) {
@@ -37,6 +46,21 @@ char rotate_ch(const char ch)
     return (ch);
 }
 
+std::string rotate_str(const std::string &source)
+{
+    // Rotate the characters in a string 
+    
+    std::string rotated;
+    rotated.reserve(source.length());
+
+    // Rotate the characters in the string
+    for (std::string::const_iterator it = source.begin(); it != source.end(); ++it) {
+        rotated.push_back(rotate_ch(*it));
+    }
+
+    return (rotated);
+}
+
 class Rot13: ObjectWrap 
 {
 public:
@@ -51,6 +75,7 @@ public:
 
         // bind methods
         NODE_SET_PROTOTYPE_METHOD(s_ct, "rotate", Rotate);
+        NODE_SET_PROTOTYPE_METHOD(s_ct, "rotateAsync", RotateAsync);
 
         // expose class as Rot13
         target->Set(String::NewSymbol("Rot13"), s_ct->GetFunction());
@@ -63,6 +88,14 @@ public:
     ~Rot13()
     {
     }
+
+    // A baton to hand off references through the eio cycle
+    struct baton_t {
+        Rot13 *rot13;
+        std::string source;
+        std::string rotated;
+        Persistent<Function> cb;
+    };
 
     static Handle<Value> New(const Arguments &args)
     {
@@ -82,19 +115,68 @@ public:
 
         REQ_STR_ARG(0, s);
 
-        // Convert the v8 Value to a std string 
-        std::string source = ObjectToString(s);
-        std::string rotated;
-        rotated.reserve(source.length());
-        
-        // Rotate the characters in the string
-        for (std::string::iterator it = source.begin(); it != source.end(); ++it) {
-            rotated.push_back(rotate_ch(*it));
+        // Convert to std::string for rotating, then back into v8 String 
+        Local<String> result = String::New(rotate_str(ObjectToString(s)).c_str());
+        return scope.Close(result);
+    }
+
+    static Handle<Value> RotateAsync(const Arguments &args) 
+    {
+        // Caller: rotateAsync(s, cb) 
+        // This function: cb(rotated(s))
+        REQ_STR_ARG(0, s);
+        REQ_FUN_ARG(1, cb);
+
+        Rot13 *rot13 = ObjectWrap::Unwrap<Rot13>(args.This());
+
+        baton_t *baton = new baton_t();
+        baton->rot13 = rot13;
+        baton->source = ObjectToString(s);
+        baton->cb = Persistent<Function>::New(cb);
+
+        // Add refcount so gc doesn't remove us yet
+        rot13->Ref();
+
+        eio_custom(EIO_Rotate, EIO_PRI_DEFAULT, EIO_AfterRotate, baton);
+        ev_ref(EV_DEFAULT_UC);
+
+        return Undefined();
+    }
+
+    static int EIO_Rotate(eio_req *req)
+    {
+        // runs in the thread pool
+        baton_t *baton = static_cast<baton_t *>(req->data);
+
+        baton->rotated = rotate_str(baton->source);
+
+        return 0;
+    }
+
+    static int EIO_AfterRotate(eio_req *req)
+    {
+        // runs back in the main thread
+        baton_t *baton = static_cast<baton_t *>(req->data);
+
+        // remove ref to event loop
+        ev_unref(EV_DEFAULT_UC);
+
+        // decref
+        baton->rot13->Unref();
+
+        Local<Value> argv[1];
+        argv[0] = String::New(baton->rotated.c_str());
+
+        TryCatch try_catch;
+        baton->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+
+        if (try_catch.HasCaught()) {
+            FatalException(try_catch);
         }
 
-        // Turn the results back into a v8 String 
-        Local<String> result = String::New(rotated.c_str());
-        return scope.Close(result);
+        baton->cb.Dispose();
+        delete baton;
+        return 0;
     }
 };
  
