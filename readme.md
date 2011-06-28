@@ -25,7 +25,7 @@ Summary
 
 The c++ implementation includes an asynchronous method:
 
-    > rot13.rotateAsync("Attack at dawn!", function(r) { console.log("rot13: " + r)} )
+    > r.rotateAsync("Attack at dawn!", function(r) { console.log("rot13: " + r)} )
     rot13: Nggnpx ng qnja!
 
 Run `test/test.js` to verify that the C++ and JS versions do the same thing.
