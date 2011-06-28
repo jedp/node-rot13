@@ -29,7 +29,8 @@ function test_rot13_js() {
 
 function test_rot13_cpp() {
   sys.puts("testing rot13 cpp");
-  test_with_rotator(rot13_cpp);
+  var r = new rot13_cpp.Rot13();
+  test_with_rotator(r);
 }
 
 test_rot13_js();

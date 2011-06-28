@@ -23,6 +23,7 @@ string ObjectToString(Local<Value> value) {
 char rotate_ch(const char ch)
 {
     // a-z -> n-m
+    // Lowercase letters more common, so check them first.
     if (97 <= ch && ch <= 122) {
         return ( (ch-97 + 13) % 26 + 97 );
     }
@@ -36,26 +37,73 @@ char rotate_ch(const char ch)
     return (ch);
 }
 
-static Handle<Value> rotate(const Arguments &args)
+class Rot13: ObjectWrap 
 {
-    REQ_STR_ARG(0, s);
+public:
 
-    std::string source = ObjectToString(s);
-    std::string rotated;
-    rotated.reserve(source.length());
-    
-    for (std::string::iterator it = source.begin(); it != source.end(); ++it) {
-        rotated.push_back(rotate_ch(*it));
+    static Persistent<FunctionTemplate> s_ct;
+
+    static void Init(Handle<Object> target)
+    {
+        s_ct = Persistent<FunctionTemplate>::New(FunctionTemplate::New(New));
+        s_ct->InstanceTemplate()->SetInternalFieldCount(1);
+        s_ct->SetClassName(String::NewSymbol("Rot13"));
+
+        // bind methods
+        NODE_SET_PROTOTYPE_METHOD(s_ct, "rotate", Rotate);
+
+        // expose class as Rot13
+        target->Set(String::NewSymbol("Rot13"), s_ct->GetFunction());
     }
 
-    // Return the rotated string as a js string
-    return (String::New(rotated.c_str()));
-}
+    Rot13() 
+    {
+    }
+
+    ~Rot13()
+    {
+    }
+
+    static Handle<Value> New(const Arguments &args)
+    {
+        Rot13 *rot13 = new Rot13();
+        rot13->Wrap(args.This());
+        return args.This();
+    }
+
+    static Handle<Value> Rotate(const Arguments &args)
+    {
+        // Rotate(s) -> rotated
+        //
+        // Given a string argument, rotate all the characters
+        // in it and return the result.
+        
+        HandleScope scope;
+
+        REQ_STR_ARG(0, s);
+
+        // Convert the v8 Value to a std string 
+        std::string source = ObjectToString(s);
+        std::string rotated;
+        rotated.reserve(source.length());
+        
+        // Rotate the characters in the string
+        for (std::string::iterator it = source.begin(); it != source.end(); ++it) {
+            rotated.push_back(rotate_ch(*it));
+        }
+
+        // Turn the results back into a v8 String 
+        Local<String> result = String::New(rotated.c_str());
+        return scope.Close(result);
+    }
+};
  
+
+Persistent<FunctionTemplate> Rot13::s_ct;
 extern "C" {
     static void init(Handle<Object> target)
     {
-        NODE_SET_METHOD(target, "rotate", rotate);
+        Rot13::Init(target);
     }
     NODE_MODULE(rot13, init);
 }
