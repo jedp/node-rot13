@@ -45,14 +45,19 @@ On my MacBook, the first part of the test suite reports:
 
     ** Timing comparison (milliseconds)
     rot13 encoding Aeneid, Book I, 100 times
-    Average js run: 2.75
-    Average cpp run: 2.62
+    Average js run: 2.77
+    Average cpp run: 2.59
+    Average cpp async run: 1.23
 
 Note that the timing test runs the pure js encoder once in advance to give v8 a
 chance to compile it.  
 
 Rot13 is obviously a silly example, but it demonstrates the speed of node.js
 and js on v8.  They're just about as fast as native C++.
+
+It also shows the value of making your function async if possible.  Here, the
+C++ `rotateAsync()` only spends about 40% of the time on the main node.js
+thread as the other two `rotate()` methods.
 
 Resources
 ---------
