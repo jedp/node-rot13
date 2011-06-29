@@ -39,8 +39,6 @@ Run `test/test.js` to verify that the C++ and JS versions do the same thing.
 Timing
 ------
 
-The use of this C++ extension provides a 5% speedup for rot13 encodings.  
-
 On my MacBook, the first part of the test suite reports:
 
     ** Timing comparison (milliseconds)
@@ -53,7 +51,7 @@ Note that the timing test runs the pure js encoder once in advance to give v8 a
 chance to compile it.  
 
 Rot13 is obviously a silly example, but it demonstrates the speed of node.js
-and js on v8.  They're just about as fast as native C++.
+and js on v8.  The synchronous js method is just about as fast as native C++.
 
 It also shows the value of making your function async if possible.  Here, the
 C++ `rotateAsync()` only spends about 40% of the time on the main node.js
