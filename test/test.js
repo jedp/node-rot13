@@ -65,6 +65,7 @@ function time_them () {
 
   var js_time = 0;
   var cpp_time = 0;
+  var cpp_async_time = 0;
 
   for (var i=0; i<100; i++) {
     var then = new Date();
@@ -79,6 +80,14 @@ function time_them () {
     cpp_time += new Date() - then;
   }
   sys.puts("Average cpp run: " + (cpp_time/100));
+
+  function do_nothing() {};
+  for (var i=0; i<100; i++) {
+    var then = new Date();
+    r_cpp.rotateAsync(aeneid, do_nothing);
+    cpp_async_time += new Date() - then;
+  }
+  sys.puts("Average cpp async run: " + (cpp_async_time/100));
 }
 
 sys.puts("\n** Timing comparison (milliseconds)");
