@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+var fs = require('fs');
 var sys = require('sys');
 var assert = require('assert');
 var rot13_js = require('../lib/rot13_javascript');
@@ -54,6 +55,37 @@ function test_rot13_cpp() {
   }
 }
 
+function time_them () {
+  var r_js = new rot13_js.Rot13();
+  var r_cpp = new rot13_cpp.Rot13();
+  var aeneid = fs.readFileSync('test/aeneid.I.txt', 'ascii');
+
+  // give v8 a chance to make r_js fast
+  r_js.rotate("I like pie");
+
+  var js_time = 0;
+  var cpp_time = 0;
+
+  for (var i=0; i<100; i++) {
+    var then = new Date();
+    r_js.rotate(aeneid);
+    js_time += new Date() - then;
+  }
+  sys.puts("Average js run: " + (js_time/100));
+
+  for (var i=0; i<100; i++) {
+    var then = new Date();
+    r_cpp.rotate(aeneid);
+    cpp_time += new Date() - then;
+  }
+  sys.puts("Average cpp run: " + (cpp_time/100));
+}
+
+sys.puts("\n** Timing comparison (milliseconds)");
+sys.puts("rot13 encoding Aeneid, Book I, 100 times");
+time_them();
+
+sys.puts("\n** Unit Tests");
+
 test_rot13_js();
 test_rot13_cpp();
-
