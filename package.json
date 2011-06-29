@@ -1,0 +1,27 @@
+{"name": "rot13",
+ "description": "Sync/Async rot13 encoding via C++ extension",
+ "author": "Jed Parsons <jed@jedparsons.com> (http://jedparsons.com)",
+ "version": "0.1.0",
+
+ "repository": {
+    "type": "git", 
+    "url": "https://github.com/jedp/node-rot13"
+ },
+
+ "directories": {
+    "src": "src"
+ },
+
+ "licenses": [
+    {"type": "MIT"}
+ ],
+
+ "engines": {
+    "node": "*"
+ },
+
+ "scripts": {
+    "install": "node-waf configure build"
+ }
+}
+
