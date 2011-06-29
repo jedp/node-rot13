@@ -2,7 +2,7 @@
 
 var sys = require('sys');
 var assert = require('assert');
-var rot13_js = require('../rot13');
+var rot13_js = require('../lib/rot13_javascript');
 var rot13_cpp = require('../build/default/rot13');
 
 var tests = [

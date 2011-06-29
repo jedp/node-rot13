@@ -13,13 +13,18 @@ on the v8 thread pool, well then.  Here you are.
 Summary
 -------
 
-`rot13.js` is a JS implementation.
+`lib/rot13_javascript.js` is a JS implementation.
 
 `src/rot13.cpp` is a C++ extension.
 
+Build the node extension:
+
     % node-waf configure build
+
+Use like so:
+
     % node
-    > var rot13 = require("./build/default/rot13")
+    > var rot13 = require("./rot13")
     > var r = new rot13.Rot13()
     > r.rotate("Attack at dawn!")
     'Nggnpx ng qnja!'
@@ -41,7 +46,7 @@ To Do
 
 1. Make this not happen when you forget to use `new`:
 
-        > var rot13 = require("./build/default/rot13");
+        > var rot13 = require("./rot13");
         > var r = rot13.Rot13();   // <-- didn't say "new rot13.Rot13()"
         Assertion failed: (handle->InternalFieldCount() > 0), function Wrap, file /usr/local/include/node/node_object_wrap.h, line 61.
 
