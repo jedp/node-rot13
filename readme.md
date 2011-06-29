@@ -36,6 +36,24 @@ The c++ implementation includes an asynchronous method:
 
 Run `test/test.js` to verify that the C++ and JS versions do the same thing.
 
+Timing
+------
+
+The use of this C++ extension provides a 5% speedup for rot13 encodings.  
+
+On my MacBook, the first part of the test suite reports:
+
+    ** Timing comparison (milliseconds)
+    rot13 encoding Aeneid, Book I, 100 times
+    Average js run: 2.75
+    Average cpp run: 2.62
+
+Note that the timing test runs the pure js encoder once in advance to give v8 a
+chance to compile it.  
+
+Rot13 is obviously a silly example, but it demonstrates the speed of node.js
+and js on v8.  They're just about as fast as native C++.
+
 Resources
 ---------
 
