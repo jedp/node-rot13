@@ -39,7 +39,7 @@ char rotate_ch(const char ch)
     }
 
     // A-Z -> N-M
-    else if (65 <= ch && ch <= 90) {
+    if (65 <= ch && ch <= 90) {
         return ( (ch-65 + 13) % 26 + 65 );
     }
 
