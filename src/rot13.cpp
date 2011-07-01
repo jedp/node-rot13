@@ -47,19 +47,19 @@ char rotate_ch(const char ch)
     return (ch);
 }
 
-std::string rotate_str(const std::string &source)
+void rotate_str(const std::string& source, std::string& rotated)
 {
     // Rotate the characters in a string 
     
-    std::string rotated;
-    rotated.reserve(source.length());
+    //std::string rotated;
+    //rotated.reserve(source.length());
 
     // Rotate the characters in the string
     for (std::string::const_iterator it = source.begin(); it != source.end(); ++it) {
         rotated.push_back(rotate_ch(*it));
     }
 
-    return (rotated);
+    //return (rotated);
 }
 
 class Rot13: ObjectWrap 
@@ -95,7 +95,7 @@ public:
         Rot13 *rot13;
         std::string source;
         std::string rotated;
-        Persistent<Function> cb;
+        Persistent<Function> callback;
     };
 
     static Handle<Value> New(const Arguments &args)
@@ -114,26 +114,28 @@ public:
         
         HandleScope scope;
 
-        REQ_STR_ARG(0, s);
+        REQ_STR_ARG(0, source);
+        std::string rotated;
+        rotate_str(ObjectToString(source).c_str(), rotated);
 
         // Convert to std::string for rotating, then back into v8 String 
-        Local<String> result = String::New(rotate_str(ObjectToString(s)).c_str());
+        Local<String> result = String::New(rotated.c_str()); //rotated);
         return scope.Close(result);
     }
 
     static Handle<Value> RotateAsync(const Arguments &args) 
     {
-        // Caller: rotateAsync(s, cb) 
-        // This function: cb(rotated(s))
-        REQ_STR_ARG(0, s);
-        REQ_FUN_ARG(1, cb);
+        // Caller: rotateAsync(source, callback) 
+        // This function: callback(rotated(source))
+        REQ_STR_ARG(0, source);
+        REQ_FUN_ARG(1, callback);
 
         Rot13 *rot13 = ObjectWrap::Unwrap<Rot13>(args.This());
 
         baton_t *baton = new baton_t();
         baton->rot13 = rot13;
-        baton->source = ObjectToString(s);
-        baton->cb = Persistent<Function>::New(cb);
+        baton->source = ObjectToString(source);
+        baton->callback = Persistent<Function>::New(callback);
 
         // Add refcount so we won't get gc'd while running in another thread
         rot13->Ref();
@@ -155,9 +157,11 @@ public:
         // runs in the thread pool
         // nothing here should use js or v8
        
+        std::string rotated;
         baton_t *baton = static_cast<baton_t *>(req->data);
+        rotate_str(baton->source, rotated);
 
-        baton->rotated = rotate_str(baton->source);
+        baton->rotated = rotated;
 
         // when this function returns, libeio will notify the main
         // thread that EIO_AfterRotate sould run.
@@ -178,7 +182,7 @@ public:
         argv[0] = String::New(baton->rotated.c_str());
 
         TryCatch try_catch;
-        baton->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+        baton->callback->Call(Context::GetCurrent()->Global(), 1, argv);
 
         if (try_catch.HasCaught()) {
             FatalException(try_catch);
@@ -186,7 +190,7 @@ public:
 
         // Having run the callback and caught any exceptions, we
         // destroy the persistent reference and the baton.
-        baton->cb.Dispose();
+        baton->callback.Dispose();
         delete baton;
         return 0;
     }
