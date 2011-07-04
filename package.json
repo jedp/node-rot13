@@ -1,7 +1,7 @@
 {"name": "rot13",
  "description": "Sync/Async rot13 encoding via C++ extension",
  "author": "Jed Parsons <jed@jedparsons.com> (http://jedparsons.com)",
- "version": "0.1.0",
+ "version": "0.1.1",
 
  "repository": {
     "type": "git", 
