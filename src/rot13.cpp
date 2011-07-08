@@ -24,10 +24,10 @@ using namespace std;
                 String::New("Argument " #I " must be a function")));    \
     Local<Function> VAR = Local<Function>::Cast(args[I])        
 
-// Convert a v8 value to a std string
-string ObjectToString(Local<Value> value) {
+void ObjectToString(const Local<Value>& value, std::string& converted)
+{
     String::Utf8Value utf8_value(value);
-    return std::string(*utf8_value);
+    converted = *utf8_value;
 }
 
 char rotate_ch(const char ch)
@@ -115,8 +115,10 @@ public:
         HandleScope scope;
 
         REQ_STR_ARG(0, source);
+        std::string as_string;
         std::string rotated;
-        rotate_str(ObjectToString(source).c_str(), rotated);
+        ObjectToString(source, as_string);
+        rotate_str(as_string, rotated);
 
         // Convert to std::string for rotating, then back into v8 String 
         Local<String> result = String::New(rotated.c_str()); //rotated);
@@ -130,11 +132,14 @@ public:
         REQ_STR_ARG(0, source);
         REQ_FUN_ARG(1, callback);
 
+        std::string as_string;
+        ObjectToString(source, as_string);
+
         Rot13 *rot13 = ObjectWrap::Unwrap<Rot13>(args.This());
 
         baton_t *baton = new baton_t();
         baton->rot13 = rot13;
-        baton->source = ObjectToString(source);
+        baton->source = as_string;
         baton->callback = Persistent<Function>::New(callback);
 
         // Add refcount so we won't get gc'd while running in another thread
