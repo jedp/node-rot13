@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
-var sys = require('sys');
+var util = require('util');
 var assert = require('assert');
 var rot13_js = require('../lib/rot13_javascript');
 var rot13_cpp = require('../build/default/rot13');
@@ -15,7 +15,7 @@ var tests = [
 
 function test_with_rotator_sync(r) {
   for (var i in tests) {
-    sys.puts('[sync]    ' + tests[i][0] + ' -> ' + tests[i][1]);
+    util.puts('[sync]    ' + tests[i][0] + ' -> ' + tests[i][1]);
     
     assert.ok(r.rotate(tests[i][0]) === tests[i][1]);
     assert.ok(r.rotate(r.rotate(tests[i][0])) === tests[i][0]);
@@ -28,7 +28,7 @@ function test_with_rotator_async(r) {
     var expected = tests[i][1];
     var testAsync = function(source, expected) {
       r.rotateAsync(source, function(rotated) {
-          sys.puts('[async]   ' + source + ' -> ' + expected);
+          util.puts('[async]   ' + source + ' -> ' + expected);
           assert.ok(rotated === expected);
       });
     }
@@ -37,21 +37,21 @@ function test_with_rotator_async(r) {
 }
 
 function test_rot13_js() {
-  sys.puts("testing rot13 js");
+  util.puts("testing rot13 js");
   var r = new rot13_js.Rot13();
   test_with_rotator_sync(r);
 }
 
 function test_rot13_cpp() {
-  sys.puts("testing rot13 cpp");
+  util.puts("testing rot13 cpp");
   var r = new rot13_cpp.Rot13();
   test_with_rotator_sync(r);
 
   if (typeof r.rotateAsync !== 'undefined') {
-    sys.puts("testing rot13 cpp async");
+    util.puts("testing rot13 cpp async");
     test_with_rotator_async(r)
   } else {
-    sys.puts("Cannot test rotateAsync.  The c++ extension doesn't provide it");
+    util.puts("Cannot test rotateAsync.  The c++ extension doesn't provide it");
   }
 }
 
@@ -72,14 +72,14 @@ function time_them () {
     r_js.rotate(aeneid);
     js_time += new Date() - then;
   }
-  sys.puts("Average js run: " + (js_time/100));
+  util.puts("Average js run: " + (js_time/100));
 
   for (var i=0; i<100; i++) {
     var then = new Date();
     r_cpp.rotate(aeneid);
     cpp_time += new Date() - then;
   }
-  sys.puts("Average cpp run: " + (cpp_time/100));
+  util.puts("Average cpp run: " + (cpp_time/100));
 
   function do_nothing() {};
   for (var i=0; i<100; i++) {
@@ -87,14 +87,14 @@ function time_them () {
     r_cpp.rotateAsync(aeneid, do_nothing);
     cpp_async_time += new Date() - then;
   }
-  sys.puts("Average cpp async run: " + (cpp_async_time/100));
+  util.puts("Average cpp async run: " + (cpp_async_time/100));
 }
 
-sys.puts("\n** Timing comparison (milliseconds)");
-sys.puts("rot13 encoding Aeneid, Book I, 100 times");
+util.puts("\n** Timing comparison (milliseconds)");
+util.puts("rot13 encoding Aeneid, Book I, 100 times");
 time_them();
 
-sys.puts("\n** Unit Tests");
+util.puts("\n** Unit Tests");
 
 test_rot13_js();
 test_rot13_cpp();
