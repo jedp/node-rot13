@@ -25,10 +25,10 @@ def build(bld):
 
 def shutdown():
     if Options.commands['clean']:
-        if path.exists('rot13.node'):
+        if fs.exists('rot13.node'):
             os.unlink('rot13.node')
-        if path.exists('build/default/rot13.node'):
+        if fs.exists('build/default/rot13.node'):
             os.unlink('build/default/rot13.node')
     
-    if path.exists('build/default/rot13.node') and not path.exists('rot13.node'):
+    if fs.exists('build/default/rot13.node') and not fs.exists('rot13.node'):
         os.symlink('build/default/rot13.node', 'rot13.node')
